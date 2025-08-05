@@ -3,6 +3,7 @@ import pygame
 from settings import Settings
 from ship import Ship
 from bullet import Bullet
+from alien import Alien
 
 class AlienInvasion:
 	"""Overall class to manage game assets and behavior"""
@@ -18,6 +19,8 @@ class AlienInvasion:
 		self.ship = Ship(self)
 		# Create a group of bullets
 		self.bullets = pygame.sprite.Group()
+		self.aliens = pygame.sprite.Group()
+		self._create_fleet()
 
 	def _check_keydown_events(self, event):
 		""" Respond to keypresses """
@@ -49,17 +52,22 @@ class AlienInvasion:
 			elif event.type == pygame.KEYUP:
 				# Stop movement when direction is released
 				self._check_keyup_events(event)
-	
-	def _update_screen(self):
-		"""Updates images on the screen and flip to the new screen"""
-		self.screen.fill(self.settings.bg_color)
-		# Draw the ship to the screen
-		self.ship.blitme()
-		# Draw each bullet in the group of bullets crated from sprite group class
-		for bullet in self.bullets.sprites():
-			bullet.draw_bullet()
-		# Make the most recently drawn screen visible
-		pygame.display.flip()
+
+	def _create_fleet(self):
+		""" Create a fleet of aliens """
+		# Make an alien and find the number of aliens in a row
+		# Spacing between each alien is equal to one alien width
+		alien = Alien(self)
+		alien_width = alien.rect.width
+		available_space_x = self.settings.screen_width - (2 * alien_width)
+		number_aliens_x = available_space_x // (2 * alien_width)
+		# Create the first row of aliens.
+		for alien_number in range(number_aliens_x):
+			# Create an alien place it in the row
+			alien = Alien(self)
+			alien.x = alien_width + 2 * alien_width * alien_number
+			alien.rect.x = alien.x
+			self.aliens.add(alien)
 
 	def _update_bullets(self):
 		""" Update position of bullets and get rid of old bullets """
@@ -68,14 +76,25 @@ class AlienInvasion:
 		#Get rid of bullets that have dissapeared.
 		for bullet in self.bullets.copy():
 				if bullet.rect.bottom <= 0:
-					self.bullets.remove(bullet)
+					self.bullets.remove(bullet)	
+
+	def _update_screen(self):
+		"""Updates images on the screen and flip to the new screen"""
+		self.screen.fill(self.settings.bg_color)
+		# Draw the ship to the screen
+		self.ship.blitme()
+		# Draw each bullet in the group of bullets crated from sprite group class
+		for bullet in self.bullets.sprites():
+			bullet.draw_bullet()
+		self.aliens.draw(self.screen)
+		# Make the most recently drawn screen visible
+		pygame.display.flip()
 
 	def run_game(self):
 		"""Start the main loop for the game"""
 		while True:
 			self._check_events()
 			self.ship.update()
-			#Get rid of bullets that have dissapeared
 			self._update_bullets()	
 			self._update_screen()
 
