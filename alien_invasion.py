@@ -1,4 +1,5 @@
 import sys
+import json
 from time import sleep
 import pygame
 from settings import Settings
@@ -20,6 +21,8 @@ class AlienInvasion:
 		pygame.display.set_caption("Alien Invasion")
 		# Set the background color
 		self.bg_color = (self.settings.bg_color)
+		self.save_file = "save_file.json"
+		self.high_score = self._check_saved_highscore()
 		# Create an instance to store game statistics,
 		# and create a scoreboard.
 		self.stats = GameStats(self)
@@ -31,6 +34,8 @@ class AlienInvasion:
 		self._create_fleet()
 		# Make the Play button.
 		self.play_button = Button(self, "Play")
+		self.save_file = "save_file.json"
+
 
 	def _check_keydown_events(self, event):
 		""" Respond to keypresses """
@@ -41,6 +46,8 @@ class AlienInvasion:
 			# Move the ship to the left
 			self.ship.moving_left = True
 		elif event.key == pygame.K_q:
+			if self._check_saved_highscore() < self.stats.high_score:
+				self._save_new_high_score()
 			sys.exit()
 		elif event.key == pygame.K_SPACE:
 			self._fire_bullet()
@@ -56,6 +63,8 @@ class AlienInvasion:
 		""" Respond to keypresses and mouse events"""
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
+				if self._check_saved_highscore() < self.stats.high_score:
+					self._save_new_high_score()
 				sys.exit()
 			elif event.type == pygame.KEYDOWN:
 				self._check_keydown_events(event)	
@@ -217,6 +226,17 @@ class AlienInvasion:
 				self._ship_hit()
 				break
 
+	def _save_new_high_score(self):
+		""" Saves Highscore to a file """
+		with open(self.save_file, 'w') as f:
+			json.dump(self.stats.high_score, f)
+
+	def _check_saved_highscore(self):
+		""" Checks the existing highscore in file """
+		with open(self.save_file) as f:
+			saved_highscore = json.load(f)
+			return saved_highscore
+
 	def run_game(self):
 		"""Start the main loop for the game"""
 		while True:
@@ -225,7 +245,7 @@ class AlienInvasion:
 				self.ship.update()
 				self._update_bullets()
 				self._update_aliens()	
-			self._update_screen()
+			self._update_screen()	
 
 if __name__ == '__main__':
 	ai = AlienInvasion()
